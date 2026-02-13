@@ -49,7 +49,23 @@ export default function ChallengesList({ gameId, playerId }: ChallengesListProps
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+
+    // Subscribe to events changes for realtime updates
+    const channel = supabase
+      .channel(`events-${gameId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `game_id=eq.${gameId}` },
+        () => {
+          fetchData(); // Refetch when events change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData, gameId]);
 
   const hasClaimed = (challengeId: string, kind: 'base' | 'bonus') => {
     return events.some((e) => e.challenge_id === challengeId && e.kind === kind);

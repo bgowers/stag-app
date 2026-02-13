@@ -37,7 +37,23 @@ export default function ActivityFeed({ gameId }: ActivityFeedProps) {
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+
+    // Subscribe to events changes for realtime activity feed
+    const channel = supabase
+      .channel(`activity-${gameId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `game_id=eq.${gameId}` },
+        () => {
+          fetchEvents(); // Refetch when events change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchEvents, gameId]);
 
   if (isLoading) {
     return (

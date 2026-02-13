@@ -56,7 +56,23 @@ export default function Scoreboard({ gameId, currentPlayerId }: ScoreboardProps)
 
   useEffect(() => {
     fetchScoreboard();
-  }, [fetchScoreboard]);
+
+    // Subscribe to events changes for realtime scoreboard updates
+    const channel = supabase
+      .channel(`scoreboard-${gameId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `game_id=eq.${gameId}` },
+        () => {
+          fetchScoreboard(); // Refetch when events change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchScoreboard, gameId]);
 
   if (isLoading) {
     return (

@@ -39,7 +39,23 @@ export default function HostActivityFeed({ gameId }: HostActivityFeedProps) {
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+
+    // Subscribe to events changes for realtime activity feed
+    const channel = supabase
+      .channel(`host-activity-${gameId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `game_id=eq.${gameId}` },
+        () => {
+          fetchEvents(); // Refetch when events change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchEvents, gameId]);
 
   const handleUndo = async (eventId: string, playerName: string, challengeTitle: string) => {
     if (!confirm(`Undo ${playerName}'s claim for "${challengeTitle}"?`)) {
