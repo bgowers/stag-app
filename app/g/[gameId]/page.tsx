@@ -83,7 +83,7 @@ export default function PlayerPage() {
 
   // Show player picker if no player selected
   if (!currentPlayerId) {
-    return <PlayerPicker players={players} onSelectPlayer={handleSelectPlayer} />;
+    return <PlayerPicker gameId={gameId} players={players} onSelectPlayer={handleSelectPlayer} />;
   }
 
   // Find current player
