@@ -55,6 +55,7 @@ npm run build
 ### Player Identity Pattern
 
 **No traditional authentication.** Instead:
+
 - Anyone with the game link can view and participate
 - Each device selects a player identity from the game's player list
 - Player ID stored in localStorage (`stagApp_playerId_[gameId]`)
@@ -81,6 +82,7 @@ events(id, game_id, player_id, challenge_id, kind, points,
 ```
 
 **Key constraint:** The unique index on `(player_id, challenge_id, kind)` ensures:
+
 - Each player can claim base points **once**
 - Each player can claim bonus points **once**
 - Database-level enforcement (not just UI)
@@ -90,7 +92,7 @@ events(id, game_id, player_id, challenge_id, kind, points,
 - Client initialized in `lib/supabase.ts`
 - Environment variables:
   - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
 - Row-level security policies should allow public read/write (since no auth)
 
 ### Realtime Strategy
@@ -122,16 +124,19 @@ events(id, game_id, player_id, challenge_id, kind, points,
 ### Host Features
 
 **Players management:**
+
 - Add player (name input + validation)
 - Remove player (soft or hard delete — check implementation)
 
 **Challenges management:**
+
 - Create/edit/delete challenges
 - Toggle `is_active` to show/hide from player view
 - `bonus_points` can be null (some challenges may not have bonus)
 - `sort_order` for custom ordering
 
 **Activity feed undo:**
+
 - Host can delete an `events` row to reverse a claim
 - Useful for mistakes or disputes
 

@@ -33,12 +33,14 @@ A real-time points tracking web app for stag do (bachelor party) challenges. Cre
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <your-repo-url>
    cd stag-app
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -46,9 +48,10 @@ A real-time points tracking web app for stag do (bachelor party) challenges. Cre
 3. **Set up environment variables**
 
    Create a `.env.local` file in the root directory:
+
    ```bash
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_supabase_anon_key
    ```
 
 4. **Set up the database**
@@ -58,6 +61,7 @@ A real-time points tracking web app for stag do (bachelor party) challenges. Cre
 5. **Enable Realtime** (Important!)
 
    Run these commands in your Supabase SQL Editor:
+
    ```sql
    ALTER PUBLICATION supabase_realtime ADD TABLE events;
    ALTER PUBLICATION supabase_realtime ADD TABLE players;
@@ -67,6 +71,7 @@ A real-time points tracking web app for stag do (bachelor party) challenges. Cre
    See [REALTIME_SETUP.md](./REALTIME_SETUP.md) for detailed instructions.
 
 6. **Run the development server**
+
    ```bash
    npm run dev
    ```
@@ -121,6 +126,7 @@ stag-app/
 ### Player Identity Pattern
 
 The app doesn't use traditional authentication. Instead:
+
 - Each device selects a player identity from the game's player list
 - Player ID is stored in localStorage per game: `stagApp_playerId_{gameId}`
 - Anyone with the game link can participate
@@ -136,9 +142,11 @@ The app doesn't use traditional authentication. Instead:
 - `events` - Claim events (with unique constraint per player/challenge/kind)
 
 **Key constraint:**
+
 ```sql
 UNIQUE (player_id, challenge_id, kind)
 ```
+
 This ensures each player can claim base points once and bonus points once per challenge.
 
 ## 🧪 Development
@@ -157,6 +165,7 @@ npm test             # Run Jest tests
 ### Quality Gates
 
 Before committing:
+
 1. `npm run typecheck` must pass
 2. `npm run lint` must pass
 3. `npm test` must pass
@@ -182,12 +191,13 @@ supabase db pull --db-url postgresql://...
 
 1. Push your code to GitHub
 2. Import project to Vercel
-3. Add environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+3. Add environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`)
 4. Deploy
 
 ### Other Platforms
 
 The app is a standard Next.js application and can be deployed to any platform that supports Next.js:
+
 - Netlify
 - Railway
 - Render
@@ -204,7 +214,7 @@ The app is a standard Next.js application and can be deployed to any platform th
 ### Environment Variables
 
 - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` - Your Supabase anonymous key
 
 ## 🐛 Troubleshooting
 
