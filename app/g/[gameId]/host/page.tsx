@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import ShareLink from '@/components/ShareLink';
 import PlayersManager from '@/components/PlayersManager';
+import ChallengesManager from '@/components/ChallengesManager';
 
 interface HostPageProps {
   params: Promise<{ gameId: string }>;
@@ -46,7 +47,7 @@ export default async function HostPage({ params }: HostPageProps) {
           {/* Challenges Section */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-2xl font-semibold mb-4">Challenges</h2>
-            <p className="text-gray-500">Challenge management coming soon...</p>
+            <ChallengesManager gameId={gameId} />
           </div>
         </div>
 
