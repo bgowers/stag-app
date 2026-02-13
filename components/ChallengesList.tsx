@@ -145,7 +145,14 @@ export default function ChallengesList({ gameId, playerId }: ChallengesListProps
 
         return (
           <div key={challenge.id} className="bg-white rounded-xl shadow-md p-6 border-2 border-gray-100">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">{challenge.title}</h3>
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-xl font-bold text-gray-900">{challenge.title}</h3>
+              {challenge.is_repeatable && (
+                <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                  REPEATABLE
+                </span>
+              )}
+            </div>
             {challenge.description && (
               <p className="text-gray-600 mb-4">{challenge.description}</p>
             )}
@@ -162,30 +169,34 @@ export default function ChallengesList({ gameId, playerId }: ChallengesListProps
               {/* Base Points Button */}
               <button
                 onClick={() => handleClaim(challenge, 'base')}
-                disabled={baseClaimed}
+                disabled={baseClaimed && !challenge.is_repeatable}
                 className={`flex-1 min-w-[140px] py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                  baseClaimed
+                  baseClaimed && !challenge.is_repeatable
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
                 }`}
               >
                 <Trophy size={20} />
-                {baseClaimed ? 'Claimed' : `Claim +${challenge.base_points}`}
+                {baseClaimed && !challenge.is_repeatable
+                  ? 'Claimed'
+                  : `Claim +${challenge.base_points}`}
               </button>
 
               {/* Bonus Points Button */}
               {challenge.bonus_points && (
                 <button
                   onClick={() => handleClaim(challenge, 'bonus')}
-                  disabled={bonusClaimed}
+                  disabled={bonusClaimed && !challenge.is_repeatable}
                   className={`flex-1 min-w-[140px] py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                    bonusClaimed
+                    bonusClaimed && !challenge.is_repeatable
                       ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       : 'bg-green-600 text-white hover:bg-green-700 active:scale-95'
                   }`}
                 >
                   <Award size={20} />
-                  {bonusClaimed ? 'Claimed' : `Bonus +${challenge.bonus_points}`}
+                  {bonusClaimed && !challenge.is_repeatable
+                    ? 'Claimed'
+                    : `Bonus +${challenge.bonus_points}`}
                 </button>
               )}
             </div>

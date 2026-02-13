@@ -23,6 +23,7 @@ export interface Challenge {
   bonus_points: number | null;
   category: string | null;
   is_active: boolean;
+  is_repeatable: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
