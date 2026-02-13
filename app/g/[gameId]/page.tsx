@@ -5,8 +5,11 @@ import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Game, Player } from '@/lib/types';
 import PlayerPicker from '@/components/PlayerPicker';
+import ChallengesList from '@/components/ChallengesList';
+import Scoreboard from '@/components/Scoreboard';
+import ActivityFeed from '@/components/ActivityFeed';
 import { Toaster } from 'react-hot-toast';
-import { LogOut } from 'lucide-react';
+import { LogOut, Trophy, Users, Activity } from 'lucide-react';
 
 export default function PlayerPage() {
   const params = useParams();
@@ -16,6 +19,7 @@ export default function PlayerPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'challenges' | 'scoreboard' | 'activity'>('challenges');
 
   const fetchGameData = useCallback(async () => {
     try {
@@ -91,6 +95,12 @@ export default function PlayerPage() {
     return null;
   }
 
+  const tabs = [
+    { id: 'challenges' as const, label: 'Challenges', icon: Trophy },
+    { id: 'scoreboard' as const, label: 'Scores', icon: Users },
+    { id: 'activity' as const, label: 'Activity', icon: Activity },
+  ];
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-50 to-teal-100 p-4 md:p-8">
       <Toaster position="top-center" />
@@ -115,12 +125,38 @@ export default function PlayerPage() {
           </button>
         </div>
 
-        {/* Tabs will go here */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-          <p className="text-gray-500">Player view coming soon...</p>
-          <p className="text-sm text-gray-400 mt-2">
-            Challenges, scoreboard, and activity feed will appear here
-          </p>
+        {/* Tabs */}
+        <div className="bg-white rounded-t-2xl shadow-lg border-b border-gray-200">
+          <div className="flex">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 font-semibold transition-colors ${
+                    activeTab === tab.id
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon size={20} />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="bg-white rounded-b-2xl shadow-xl p-6">
+          {activeTab === 'challenges' && (
+            <ChallengesList gameId={gameId} playerId={currentPlayerId} />
+          )}
+          {activeTab === 'scoreboard' && (
+            <Scoreboard gameId={gameId} currentPlayerId={currentPlayerId} />
+          )}
+          {activeTab === 'activity' && <ActivityFeed gameId={gameId} />}
         </div>
       </div>
     </main>
