@@ -193,7 +193,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="e.g., Down your pint"
             />
           </div>
@@ -205,7 +205,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="e.g., Finish a full pint in under 10 seconds"
               rows={2}
             />
@@ -222,7 +222,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, base_points: parseInt(e.target.value) || 0 })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 min="0"
               />
             </div>
@@ -237,7 +237,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, bonus_points: parseInt(e.target.value) || 0 })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 min="0"
               />
             </div>
@@ -251,7 +251,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
               type="text"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="e.g., drinking, performance"
             />
           </div>

@@ -27,7 +27,7 @@ export default function ShareLink({ gameId }: ShareLinkProps) {
           type="text"
           readOnly
           value={url}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm"
         />
         <button
           onClick={handleCopy}
