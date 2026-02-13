@@ -27,14 +27,14 @@ export default function ShareLink({ gameId }: ShareLinkProps) {
           type="text"
           readOnly
           value={url}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm"
+          className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm truncate"
         />
         <button
           onClick={handleCopy}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="flex-shrink-0 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap"
         >
           {copied ? <Check size={18} /> : <Copy size={18} />}
-          {copied ? 'Copied!' : 'Copy'}
+          <span className="hidden sm:inline">{copied ? 'Copied!' : 'Copy'}</span>
         </button>
       </div>
     </div>
