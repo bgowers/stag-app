@@ -98,6 +98,12 @@ ALTER PUBLICATION supabase_realtime ADD TABLE events;
 ALTER PUBLICATION supabase_realtime ADD TABLE players;
 ALTER PUBLICATION supabase_realtime ADD TABLE challenges;
 
+-- Set replica identity to FULL for Realtime filtering on non-primary key columns
+-- REQUIRED when filtering postgres_changes subscriptions by game_id
+ALTER TABLE events REPLICA IDENTITY FULL;
+ALTER TABLE players REPLICA IDENTITY FULL;
+ALTER TABLE challenges REPLICA IDENTITY FULL;
+
 -- Optional: Add some sample data for testing
 -- Uncomment the following lines if you want to start with test data
 

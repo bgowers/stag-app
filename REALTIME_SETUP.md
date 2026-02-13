@@ -21,13 +21,21 @@ You need to enable Realtime for the `events`, `players`, and `challenges` tables
 3. Create a new query and paste:
 
 ```sql
+-- Add tables to Realtime publication
 ALTER PUBLICATION supabase_realtime ADD TABLE events;
 ALTER PUBLICATION supabase_realtime ADD TABLE players;
 ALTER PUBLICATION supabase_realtime ADD TABLE challenges;
+
+-- Set replica identity to FULL (REQUIRED for filtering by game_id)
+ALTER TABLE events REPLICA IDENTITY FULL;
+ALTER TABLE players REPLICA IDENTITY FULL;
+ALTER TABLE challenges REPLICA IDENTITY FULL;
 ```
 
 4. Click **Run** or press Cmd/Ctrl + Enter
-5. You should see "Success. No rows returned" for each command
+5. You should see "Success. No rows returned" or "ALTER TABLE" for each command
+
+**Why replica identity FULL?** We filter subscriptions by `game_id` (not the primary key). Without REPLICA IDENTITY FULL, Realtime cannot see non-primary key columns in the changes and filtering won't work.
 
 ### Option 2: Using Supabase CLI (if you have psql installed)
 
@@ -72,10 +80,41 @@ const channel = supabase
 
 For this to work, the table must be added to the `supabase_realtime` publication.
 
+## Troubleshooting
+
+### Realtime still not working after ALTER PUBLICATION?
+
+If you ran `ALTER PUBLICATION` but Realtime still doesn't work, you likely **forgot to set replica identity**:
+
+```sql
+ALTER TABLE events REPLICA IDENTITY FULL;
+ALTER TABLE players REPLICA IDENTITY FULL;
+ALTER TABLE challenges REPLICA IDENTITY FULL;
+```
+
+### Why is replica identity needed?
+
+Our subscriptions filter by `game_id`:
+```typescript
+filter: `game_id=eq.${gameId}`
+```
+
+Since `game_id` is **not the primary key**, PostgreSQL needs REPLICA IDENTITY FULL to include non-key columns in the replication stream. Without it, Realtime can't see `game_id` values and filtering fails silently.
+
+### How to verify it's working?
+
+1. Open the app in two browser tabs
+2. In tab 1: Make a claim as a player
+3. In tab 2: Check the host dashboard
+4. The activity should appear **within 1 second** without refreshing
+
+If you still need to refresh, the configuration isn't complete.
+
 ## Technical Details
 
 - **Publication**: `supabase_realtime` (built-in Supabase publication)
 - **Tables**: `events`, `players`, `challenges`
+- **Replica Identity**: FULL (required for filtering by non-primary key columns)
 - **Why needed**: By default, tables are not included in the Realtime publication for security reasons
 - **RLS**: Already configured to allow all operations (see `supabase/schema.sql`)
 
