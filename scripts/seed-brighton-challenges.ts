@@ -205,6 +205,7 @@ async function seedChallenges(gameId: string) {
     ...challenge,
     game_id: gameId,
     is_active: true,
+    is_repeatable: challenge.is_repeatable ?? false, // Default to false if not specified
   }));
 
   const { data, error } = await supabase
