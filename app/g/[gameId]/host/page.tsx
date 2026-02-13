@@ -1,10 +1,9 @@
-import { supabase } from '@/lib/supabase';
-import { notFound } from 'next/navigation';
-import { Toaster } from 'react-hot-toast';
-import ShareLink from '@/components/ShareLink';
-import PlayersManager from '@/components/PlayersManager';
-import ChallengesManager from '@/components/ChallengesManager';
-import HostActivityFeed from '@/components/HostActivityFeed';
+import HostActivityFeed from "@/components/HostActivityFeed";
+import HostSections from "@/components/HostSections";
+import ShareLink from "@/components/ShareLink";
+import { supabase } from "@/lib/supabase";
+import { notFound } from "next/navigation";
+import { Toaster } from "react-hot-toast";
 
 interface HostPageProps {
   params: Promise<{ gameId: string }>;
@@ -15,9 +14,9 @@ export default async function HostPage({ params }: HostPageProps) {
 
   // Fetch game details
   const { data: game, error } = await supabase
-    .from('games')
-    .select('*')
-    .eq('id', gameId)
+    .from("games")
+    .select("*")
+    .eq("id", gameId)
     .single();
 
   if (error || !game) {
@@ -25,7 +24,7 @@ export default async function HostPage({ params }: HostPageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 p-8">
+    <main className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 p-8 text-gray-900">
       <Toaster position="top-center" />
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -37,20 +36,8 @@ export default async function HostPage({ params }: HostPageProps) {
         {/* Share Link */}
         <ShareLink gameId={gameId} />
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Players Section */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4">Players</h2>
-            <PlayersManager gameId={gameId} />
-          </div>
-
-          {/* Challenges Section */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4">Challenges</h2>
-            <ChallengesManager gameId={gameId} />
-          </div>
-        </div>
+        {/* Players and Challenges */}
+        <HostSections gameId={gameId} />
 
         {/* Activity Feed */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mt-6">
