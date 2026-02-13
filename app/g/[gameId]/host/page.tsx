@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import ShareLink from '@/components/ShareLink';
 import PlayersManager from '@/components/PlayersManager';
 import ChallengesManager from '@/components/ChallengesManager';
+import HostActivityFeed from '@/components/HostActivityFeed';
 
 interface HostPageProps {
   params: Promise<{ gameId: string }>;
@@ -54,7 +55,7 @@ export default async function HostPage({ params }: HostPageProps) {
         {/* Activity Feed */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mt-6">
           <h2 className="text-2xl font-semibold mb-4">Recent Activity</h2>
-          <p className="text-gray-500">Activity feed coming soon...</p>
+          <HostActivityFeed gameId={gameId} />
         </div>
       </div>
     </main>
