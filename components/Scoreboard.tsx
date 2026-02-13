@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { PlayerWithScore } from '@/lib/types';
 import { Medal, Crown } from 'lucide-react';
+import { useScoreboard, queryKeys } from '@/lib/queries';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ScoreboardProps {
   gameId: string;
@@ -11,52 +12,10 @@ interface ScoreboardProps {
 }
 
 export default function Scoreboard({ gameId, currentPlayerId }: ScoreboardProps) {
-  const [players, setPlayers] = useState<PlayerWithScore[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchScoreboard = useCallback(async () => {
-    try {
-      // Fetch all players with their total points
-      const { data: playersData, error: playersError } = await supabase
-        .from('players')
-        .select('*')
-        .eq('game_id', gameId);
-
-      if (playersError) throw playersError;
-
-      // Fetch all events for this game
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('player_id, points')
-        .eq('game_id', gameId);
-
-      if (eventsError) throw eventsError;
-
-      // Calculate totals
-      const totals: Record<string, number> = {};
-      eventsData?.forEach((event) => {
-        totals[event.player_id] = (totals[event.player_id] || 0) + event.points;
-      });
-
-      // Combine and sort
-      const playersWithScores: PlayerWithScore[] = (playersData || []).map((player) => ({
-        ...player,
-        total_points: totals[player.id] || 0,
-      }));
-
-      playersWithScores.sort((a, b) => b.total_points - a.total_points);
-
-      setPlayers(playersWithScores);
-    } catch (error) {
-      console.error('Error fetching scoreboard:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [gameId]);
+  const queryClient = useQueryClient();
+  const { data: players = [], isLoading } = useScoreboard(gameId);
 
   useEffect(() => {
-    fetchScoreboard();
-
     // Subscribe to events changes for realtime scoreboard updates
     const channel = supabase
       .channel(`scoreboard-${gameId}`)
@@ -64,16 +23,16 @@ export default function Scoreboard({ gameId, currentPlayerId }: ScoreboardProps)
         'postgres_changes',
         { event: '*', schema: 'public', table: 'events', filter: `game_id=eq.${gameId}` },
         () => {
-          fetchScoreboard(); // Refetch when events change
+          // Invalidate scoreboard query to trigger refetch
+          queryClient.invalidateQueries({ queryKey: queryKeys.scoreboard(gameId) });
         }
       )
       .subscribe();
 
     return () => {
-      // Use unsubscribe() instead of removeChannel() for React Strict Mode compatibility
       channel.unsubscribe();
     };
-  }, [fetchScoreboard, gameId]);
+  }, [gameId, queryClient]);
 
   if (isLoading) {
     return (

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { Player } from '@/lib/types';
-import { supabase } from '@/lib/supabase';
 import { Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAddPlayer } from '@/lib/queries';
 
 interface PlayerPickerProps {
   gameId: string;
@@ -14,7 +14,7 @@ interface PlayerPickerProps {
 
 export default function PlayerPicker({ gameId, players, onSelectPlayer }: PlayerPickerProps) {
   const [customName, setCustomName] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
+  const addPlayerMutation = useAddPlayer(gameId);
 
   const handleCustomName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,31 +33,18 @@ export default function PlayerPicker({ gameId, players, onSelectPlayer }: Player
     }
 
     // Create new player
-    setIsCreating(true);
     try {
-      const { data, error } = await supabase
-        .from('players')
-        .insert([{ game_id: gameId, name }])
-        .select()
-        .single();
-
-      if (error) {
-        // Handle duplicate name error
-        if (error.code === '23505') {
-          toast.error('Name already taken!');
-        } else {
-          throw error;
-        }
-        return;
-      }
-
+      const newPlayer = await addPlayerMutation.mutateAsync(name);
       toast.success(`Welcome, ${name}!`);
-      onSelectPlayer(data.id);
-    } catch (error) {
-      console.error('Error creating player:', error);
-      toast.error('Failed to join game');
-    } finally {
-      setIsCreating(false);
+      onSelectPlayer(newPlayer.id);
+    } catch (error: any) {
+      // Handle duplicate name error
+      if (error.code === '23505') {
+        toast.error('Name already taken!');
+      } else {
+        console.error('Error creating player:', error);
+        toast.error('Failed to join game');
+      }
     }
   };
 
@@ -81,15 +68,15 @@ export default function PlayerPicker({ gameId, players, onSelectPlayer }: Player
               onChange={(e) => setCustomName(e.target.value)}
               placeholder="Enter your name"
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              disabled={isCreating}
+              disabled={addPlayerMutation.isPending}
               autoFocus
             />
             <button
               type="submit"
-              disabled={isCreating}
+              disabled={addPlayerMutation.isPending}
               className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
             >
-              {isCreating ? 'Joining...' : 'Join Game'}
+              {addPlayerMutation.isPending ? 'Joining...' : 'Join Game'}
             </button>
           </div>
         </form>

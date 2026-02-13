@@ -1,45 +1,22 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { EventWithDetails } from '@/lib/types';
 import toast from 'react-hot-toast';
 import { Clock, Trophy, Award, Undo2 } from 'lucide-react';
+import { useEvents, useDeleteEvent, queryKeys } from '@/lib/queries';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface HostActivityFeedProps {
   gameId: string;
 }
 
 export default function HostActivityFeed({ gameId }: HostActivityFeedProps) {
-  const [events, setEvents] = useState<EventWithDetails[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchEvents = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select(`
-          *,
-          player:players!events_player_id_fkey(id, name),
-          challenge:challenges(id, title)
-        `)
-        .eq('game_id', gameId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-      setEvents(data || []);
-    } catch (error) {
-      console.error('Error fetching activity:', error);
-      toast.error('Failed to load activity');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [gameId]);
+  const queryClient = useQueryClient();
+  const { data: events = [], isLoading } = useEvents(gameId);
+  const deleteEventMutation = useDeleteEvent(gameId);
 
   useEffect(() => {
-    fetchEvents();
-
     // Subscribe to events changes for realtime activity feed
     const channel = supabase
       .channel(`host-activity-${gameId}`)
@@ -47,17 +24,16 @@ export default function HostActivityFeed({ gameId }: HostActivityFeedProps) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'events', filter: `game_id=eq.${gameId}` },
         () => {
-          fetchEvents(); // Refetch when events change
+          // Invalidate events query to trigger refetch
+          queryClient.invalidateQueries({ queryKey: queryKeys.events(gameId) });
         }
       )
       .subscribe();
 
     return () => {
-      // Use unsubscribe() instead of removeChannel() for React Strict Mode compatibility
-      // This allows the channel to reconnect properly after unmount/remount cycles
       channel.unsubscribe();
     };
-  }, [fetchEvents, gameId]);
+  }, [gameId, queryClient]);
 
   const handleUndo = async (eventId: string, playerName: string, challengeTitle: string) => {
     if (!confirm(`Undo ${playerName}'s claim for "${challengeTitle}"?`)) {
@@ -65,11 +41,7 @@ export default function HostActivityFeed({ gameId }: HostActivityFeedProps) {
     }
 
     try {
-      const { error } = await supabase.from('events').delete().eq('id', eventId);
-
-      if (error) throw error;
-
-      setEvents(events.filter((e) => e.id !== eventId));
+      await deleteEventMutation.mutateAsync(eventId);
       toast.success('Claim undone');
     } catch (error) {
       console.error('Error undoing claim:', error);

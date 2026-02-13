@@ -1,18 +1,22 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
 import { Challenge } from "@/lib/types";
 import { Edit2, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import {
+  useChallenges,
+  useAddChallenge,
+  useUpdateChallenge,
+  useDeleteChallenge,
+  useToggleChallengeActive,
+} from "@/lib/queries";
 
 interface ChallengesManagerProps {
   gameId: string;
 }
 
 export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(
     null,
@@ -27,27 +31,11 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
     is_repeatable: false,
   });
 
-  const fetchChallenges = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("challenges")
-        .select("*")
-        .eq("game_id", gameId)
-        .order("sort_order", { ascending: true });
-
-      if (error) throw error;
-      setChallenges(data || []);
-    } catch (error) {
-      console.error("Error fetching challenges:", error);
-      toast.error("Failed to load challenges");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [gameId]);
-
-  useEffect(() => {
-    fetchChallenges();
-  }, [fetchChallenges]);
+  const { data: challenges = [], isLoading } = useChallenges(gameId, false);
+  const addChallengeMutation = useAddChallenge(gameId);
+  const updateChallengeMutation = useUpdateChallenge(gameId);
+  const deleteChallengeMutation = useDeleteChallenge(gameId);
+  const toggleActiveMutation = useToggleChallengeActive(gameId);
 
   const resetForm = () => {
     setFormData({
@@ -79,45 +67,35 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
     try {
       if (editingChallenge) {
         // Update existing challenge
-        const { error } = await supabase
-          .from("challenges")
-          .update({
-            title: formData.title.trim(),
-            description: formData.description.trim() || null,
-            base_points: formData.base_points,
-            bonus_points:
-              formData.bonus_points > 0 ? formData.bonus_points : null,
-            category: formData.category.trim() || null,
-            is_active: formData.is_active,
-            is_repeatable: formData.is_repeatable,
-          })
-          .eq("id", editingChallenge.id);
-
-        if (error) throw error;
+        await updateChallengeMutation.mutateAsync({
+          id: editingChallenge.id,
+          title: formData.title.trim(),
+          description: formData.description.trim() || null,
+          base_points: formData.base_points,
+          bonus_points:
+            formData.bonus_points > 0 ? formData.bonus_points : null,
+          category: formData.category.trim() || null,
+          is_active: formData.is_active,
+          is_repeatable: formData.is_repeatable,
+        });
         toast.success("Challenge updated!");
       } else {
         // Create new challenge
-        const { error } = await supabase.from("challenges").insert([
-          {
-            game_id: gameId,
-            title: formData.title.trim(),
-            description: formData.description.trim() || null,
-            base_points: formData.base_points,
-            bonus_points:
-              formData.bonus_points > 0 ? formData.bonus_points : null,
-            category: formData.category.trim() || null,
-            is_active: formData.is_active,
-            is_repeatable: formData.is_repeatable,
-            sort_order: challenges.length,
-          },
-        ]);
-
-        if (error) throw error;
+        await addChallengeMutation.mutateAsync({
+          title: formData.title.trim(),
+          description: formData.description.trim() || null,
+          base_points: formData.base_points,
+          bonus_points:
+            formData.bonus_points > 0 ? formData.bonus_points : null,
+          category: formData.category.trim() || null,
+          is_active: formData.is_active,
+          is_repeatable: formData.is_repeatable,
+          sort_order: challenges.length,
+        });
         toast.success("Challenge created!");
       }
 
       resetForm();
-      fetchChallenges();
     } catch (error) {
       console.error("Error saving challenge:", error);
       toast.error("Failed to save challenge");
@@ -146,14 +124,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
     }
 
     try {
-      const { error } = await supabase
-        .from("challenges")
-        .delete()
-        .eq("id", challengeId);
-
-      if (error) throw error;
-
-      setChallenges(challenges.filter((c) => c.id !== challengeId));
+      await deleteChallengeMutation.mutateAsync(challengeId);
       toast.success("Challenge deleted");
     } catch (error) {
       console.error("Error deleting challenge:", error);
@@ -163,18 +134,10 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
 
   const handleToggleActive = async (challenge: Challenge) => {
     try {
-      const { error } = await supabase
-        .from("challenges")
-        .update({ is_active: !challenge.is_active })
-        .eq("id", challenge.id);
-
-      if (error) throw error;
-
-      setChallenges(
-        challenges.map((c) =>
-          c.id === challenge.id ? { ...c, is_active: !c.is_active } : c,
-        ),
-      );
+      await toggleActiveMutation.mutateAsync({
+        id: challenge.id,
+        isActive: !challenge.is_active,
+      });
       toast.success(
         challenge.is_active ? "Challenge hidden" : "Challenge shown",
       );

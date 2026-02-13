@@ -1,42 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Player } from '@/lib/types';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { UserPlus, Trash2 } from 'lucide-react';
+import { usePlayers, useAddPlayer, useRemovePlayer } from '@/lib/queries';
 
 interface PlayersManagerProps {
   gameId: string;
 }
 
 export default function PlayersManager({ gameId }: PlayersManagerProps) {
-  const [players, setPlayers] = useState<Player[]>([]);
   const [newPlayerName, setNewPlayerName] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
 
-  const fetchPlayers = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('game_id', gameId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setPlayers(data || []);
-    } catch (error) {
-      console.error('Error fetching players:', error);
-      toast.error('Failed to load players');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [gameId]);
-
-  useEffect(() => {
-    fetchPlayers();
-  }, [fetchPlayers]);
+  const { data: players = [], isLoading } = usePlayers(gameId);
+  const addPlayerMutation = useAddPlayer(gameId);
+  const removePlayerMutation = useRemovePlayer(gameId);
 
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,33 +24,18 @@ export default function PlayersManager({ gameId }: PlayersManagerProps) {
       return;
     }
 
-    setIsAdding(true);
-
     try {
-      const { data, error } = await supabase
-        .from('players')
-        .insert([{ game_id: gameId, name: newPlayerName.trim() }])
-        .select()
-        .single();
-
-      if (error) {
-        // Check for unique constraint violation
-        if (error.code === '23505') {
-          toast.error('A player with this name already exists');
-        } else {
-          throw error;
-        }
-        return;
-      }
-
-      setPlayers([...players, data]);
+      await addPlayerMutation.mutateAsync(newPlayerName);
       setNewPlayerName('');
-      toast.success(`${data.name} added!`);
-    } catch (error) {
-      console.error('Error adding player:', error);
-      toast.error('Failed to add player');
-    } finally {
-      setIsAdding(false);
+      toast.success('Player added!');
+    } catch (error: any) {
+      // Check for unique constraint violation
+      if (error.code === '23505') {
+        toast.error('A player with this name already exists');
+      } else {
+        console.error('Error adding player:', error);
+        toast.error('Failed to add player');
+      }
     }
   };
 
@@ -82,14 +45,7 @@ export default function PlayersManager({ gameId }: PlayersManagerProps) {
     }
 
     try {
-      const { error } = await supabase
-        .from('players')
-        .delete()
-        .eq('id', playerId);
-
-      if (error) throw error;
-
-      setPlayers(players.filter((p) => p.id !== playerId));
+      await removePlayerMutation.mutateAsync(playerId);
       toast.success(`${playerName} removed`);
     } catch (error) {
       console.error('Error removing player:', error);
@@ -115,15 +71,17 @@ export default function PlayersManager({ gameId }: PlayersManagerProps) {
           onChange={(e) => setNewPlayerName(e.target.value)}
           placeholder="Enter player name"
           className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          disabled={isAdding}
+          disabled={addPlayerMutation.isPending}
         />
         <button
           type="submit"
-          disabled={isAdding}
+          disabled={addPlayerMutation.isPending}
           className="flex-shrink-0 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2 whitespace-nowrap"
         >
           <UserPlus size={18} />
-          <span className="hidden sm:inline">{isAdding ? 'Adding...' : 'Add'}</span>
+          <span className="hidden sm:inline">
+            {addPlayerMutation.isPending ? 'Adding...' : 'Add'}
+          </span>
         </button>
       </form>
 

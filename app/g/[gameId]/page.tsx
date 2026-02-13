@@ -1,54 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { Game, Player } from '@/lib/types';
 import PlayerPicker from '@/components/PlayerPicker';
 import ChallengesList from '@/components/ChallengesList';
 import Scoreboard from '@/components/Scoreboard';
 import ActivityFeed from '@/components/ActivityFeed';
 import { Toaster } from 'react-hot-toast';
 import { LogOut, Trophy, Users, Activity } from 'lucide-react';
+import { useGame, usePlayers } from '@/lib/queries';
 
 export default function PlayerPage() {
   const params = useParams();
   const gameId = params.gameId as string;
 
-  const [game, setGame] = useState<Game | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'challenges' | 'scoreboard' | 'activity'>('challenges');
 
-  const fetchGameData = useCallback(async () => {
-    try {
-      // Fetch game
-      const { data: gameData, error: gameError } = await supabase
-        .from('games')
-        .select('*')
-        .eq('id', gameId)
-        .single();
+  const { data: game, isLoading: gameLoading } = useGame(gameId);
+  const { data: players = [], isLoading: playersLoading } = usePlayers(gameId);
 
-      if (gameError) throw gameError;
-      setGame(gameData);
-
-      // Fetch players
-      const { data: playersData, error: playersError } = await supabase
-        .from('players')
-        .select('*')
-        .eq('game_id', gameId)
-        .order('created_at', { ascending: true });
-
-      if (playersError) throw playersError;
-      setPlayers(playersData || []);
-    } catch (error) {
-      console.error('Error fetching game data:', error);
-    } finally {
-      // Only set loading to false after data is fetched
-      setIsLoading(false);
-    }
-  }, [gameId]);
+  const isLoading = gameLoading || playersLoading;
 
   useEffect(() => {
     // Check localStorage for saved player
@@ -56,10 +28,7 @@ export default function PlayerPage() {
     if (savedPlayerId) {
       setCurrentPlayerId(savedPlayerId);
     }
-
-    // Fetch game data (will set isLoading to false when done)
-    fetchGameData();
-  }, [gameId, fetchGameData]);
+  }, [gameId]);
 
   const handleSelectPlayer = (playerId: string) => {
     localStorage.setItem(`stagApp_playerId_${gameId}`, playerId);

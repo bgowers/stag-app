@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Challenge, Event } from '@/lib/types';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import { Trophy, Award, Search } from 'lucide-react';
+import { useChallenges, useEvents, queryKeys } from '@/lib/queries';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ChallengesListProps {
   gameId: string;
@@ -13,45 +14,16 @@ interface ChallengesListProps {
 }
 
 export default function ChallengesList({ gameId, playerId }: ChallengesListProps) {
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async () => {
-    try {
-      // Fetch active challenges
-      const { data: challengesData, error: challengesError } = await supabase
-        .from('challenges')
-        .select('*')
-        .eq('game_id', gameId)
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
+  const { data: challenges = [], isLoading: challengesLoading } = useChallenges(gameId, true);
+  const { data: events = [], isLoading: eventsLoading } = useEvents(gameId, playerId);
 
-      if (challengesError) throw challengesError;
-      setChallenges(challengesData || []);
-
-      // Fetch player's events
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('game_id', gameId)
-        .eq('player_id', playerId);
-
-      if (eventsError) throw eventsError;
-      setEvents(eventsData || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('Failed to load challenges');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [gameId, playerId]);
+  const isLoading = challengesLoading || eventsLoading;
 
   useEffect(() => {
-    fetchData();
-
     // Subscribe to events changes for realtime updates
     const channel = supabase
       .channel(`events-${gameId}`)
@@ -59,22 +31,26 @@ export default function ChallengesList({ gameId, playerId }: ChallengesListProps
         'postgres_changes',
         { event: '*', schema: 'public', table: 'events', filter: `game_id=eq.${gameId}` },
         () => {
-          fetchData(); // Refetch when events change
+          // Invalidate queries to trigger refetch
+          queryClient.invalidateQueries({ queryKey: queryKeys.events(gameId, playerId) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.scoreboard(gameId) });
         }
       )
       .subscribe();
 
     return () => {
-      // Use unsubscribe() instead of removeChannel() for React Strict Mode compatibility
       channel.unsubscribe();
     };
-  }, [fetchData, gameId]);
+  }, [gameId, playerId, queryClient]);
 
   const hasClaimed = (challengeId: string, kind: 'base' | 'bonus') => {
     return events.some((e) => e.challenge_id === challengeId && e.kind === kind);
   };
 
-  const handleClaim = async (challenge: Challenge, kind: 'base' | 'bonus') => {
+  const handleClaim = async (
+    challenge: { id: string; base_points: number; bonus_points: number | null },
+    kind: 'base' | 'bonus'
+  ) => {
     const points = kind === 'base' ? challenge.base_points : challenge.bonus_points || 0;
 
     try {
@@ -111,8 +87,9 @@ export default function ChallengesList({ gameId, playerId }: ChallengesListProps
         });
       }
 
-      // Refetch to update UI
-      fetchData();
+      // Invalidate queries to trigger refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.events(gameId, playerId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.scoreboard(gameId) });
     } catch (error) {
       console.error('Error claiming points:', error);
       toast.error('Failed to claim points');

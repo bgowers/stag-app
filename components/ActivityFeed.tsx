@@ -1,43 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { EventWithDetails } from '@/lib/types';
 import { Clock, Trophy, Award } from 'lucide-react';
+import { useEvents, queryKeys } from '@/lib/queries';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ActivityFeedProps {
   gameId: string;
 }
 
 export default function ActivityFeed({ gameId }: ActivityFeedProps) {
-  const [events, setEvents] = useState<EventWithDetails[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchEvents = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select(`
-          *,
-          player:players!events_player_id_fkey(id, name),
-          challenge:challenges(id, title)
-        `)
-        .eq('game_id', gameId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-      setEvents(data || []);
-    } catch (error) {
-      console.error('Error fetching activity:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [gameId]);
+  const queryClient = useQueryClient();
+  const { data: events = [], isLoading } = useEvents(gameId);
 
   useEffect(() => {
-    fetchEvents();
-
     // Subscribe to events changes for realtime activity feed
     const channel = supabase
       .channel(`activity-${gameId}`)
@@ -45,16 +22,16 @@ export default function ActivityFeed({ gameId }: ActivityFeedProps) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'events', filter: `game_id=eq.${gameId}` },
         () => {
-          fetchEvents(); // Refetch when events change
+          // Invalidate events query to trigger refetch
+          queryClient.invalidateQueries({ queryKey: queryKeys.events(gameId) });
         }
       )
       .subscribe();
 
     return () => {
-      // Use unsubscribe() instead of removeChannel() for React Strict Mode compatibility
       channel.unsubscribe();
     };
-  }, [fetchEvents, gameId]);
+  }, [gameId, queryClient]);
 
   if (isLoading) {
     return (
