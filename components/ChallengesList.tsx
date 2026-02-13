@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Challenge, Event } from '@/lib/types';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
-import { Trophy, Award } from 'lucide-react';
+import { Trophy, Award, Search } from 'lucide-react';
 
 interface ChallengesListProps {
   gameId: string;
@@ -16,6 +16,8 @@ export default function ChallengesList({ gameId, playerId }: ChallengesListProps
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -137,9 +139,56 @@ export default function ChallengesList({ gameId, playerId }: ChallengesListProps
     );
   }
 
+  // Get unique categories
+  const categories = ['all', ...Array.from(new Set(challenges.map(c => c.category).filter(Boolean)))];
+
+  // Filter challenges by category and search
+  const filteredChallenges = challenges.filter((challenge) => {
+    const matchesCategory = selectedCategory === 'all' || challenge.category === selectedCategory;
+    const matchesSearch = searchQuery === '' ||
+      challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      challenge.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <div className="space-y-4">
-      {challenges.map((challenge) => {
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        <input
+          type="text"
+          placeholder="Search challenges..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      {/* Category Filter Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category || 'all')}
+            className={`px-4 py-2 rounded-lg font-medium transition-all capitalize ${
+              selectedCategory === category
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {category || 'uncategorized'}
+          </button>
+        ))}
+      </div>
+
+      {/* Filtered Challenges */}
+      {filteredChallenges.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No challenges found matching your filters</p>
+        </div>
+      ) : (
+        filteredChallenges.map((challenge) => {
         const baseClaimed = hasClaimed(challenge.id, 'base');
         const bonusClaimed = hasClaimed(challenge.id, 'bonus');
 
@@ -202,7 +251,7 @@ export default function ChallengesList({ gameId, playerId }: ChallengesListProps
             </div>
           </div>
         );
-      })}
+      }))}
     </div>
   );
 }
