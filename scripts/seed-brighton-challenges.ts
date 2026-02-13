@@ -7,9 +7,21 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { config } from 'dotenv';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Load environment variables from .env.local
+config({ path: '.env.local' });
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing Supabase environment variables');
+  console.error('Make sure .env.local exists with:');
+  console.error('  NEXT_PUBLIC_SUPABASE_URL');
+  console.error('  NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
