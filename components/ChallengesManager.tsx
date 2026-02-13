@@ -22,6 +22,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
     bonus_points: 0,
     category: '',
     is_active: true,
+    is_repeatable: false,
   });
 
   const fetchChallenges = useCallback(async () => {
@@ -54,6 +55,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
       bonus_points: 0,
       category: '',
       is_active: true,
+      is_repeatable: false,
     });
     setEditingChallenge(null);
     setShowForm(false);
@@ -84,6 +86,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
             bonus_points: formData.bonus_points > 0 ? formData.bonus_points : null,
             category: formData.category.trim() || null,
             is_active: formData.is_active,
+            is_repeatable: formData.is_repeatable,
           })
           .eq('id', editingChallenge.id);
 
@@ -100,6 +103,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
             bonus_points: formData.bonus_points > 0 ? formData.bonus_points : null,
             category: formData.category.trim() || null,
             is_active: formData.is_active,
+            is_repeatable: formData.is_repeatable,
             sort_order: challenges.length,
           },
         ]);
@@ -124,6 +128,7 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
       bonus_points: challenge.bonus_points || 0,
       category: challenge.category || '',
       is_active: challenge.is_active,
+      is_repeatable: challenge.is_repeatable,
     });
     setEditingChallenge(challenge);
     setShowForm(true);
@@ -256,17 +261,32 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-              className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-            />
-            <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
-              Active (visible to players)
-            </label>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_active"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+              />
+              <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+                Active (visible to players)
+              </label>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_repeatable"
+                checked={formData.is_repeatable}
+                onChange={(e) => setFormData({ ...formData, is_repeatable: e.target.checked })}
+                className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+              />
+              <label htmlFor="is_repeatable" className="text-sm font-medium text-gray-700">
+                Repeatable (can be claimed multiple times)
+              </label>
+            </div>
           </div>
 
           <div className="flex gap-2">
