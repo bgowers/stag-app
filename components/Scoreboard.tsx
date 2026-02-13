@@ -70,7 +70,8 @@ export default function Scoreboard({ gameId, currentPlayerId }: ScoreboardProps)
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      // Use unsubscribe() instead of removeChannel() for React Strict Mode compatibility
+      channel.unsubscribe();
     };
   }, [fetchScoreboard, gameId]);
 

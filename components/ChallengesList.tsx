@@ -63,7 +63,8 @@ export default function ChallengesList({ gameId, playerId }: ChallengesListProps
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      // Use unsubscribe() instead of removeChannel() for React Strict Mode compatibility
+      channel.unsubscribe();
     };
   }, [fetchData, gameId]);
 

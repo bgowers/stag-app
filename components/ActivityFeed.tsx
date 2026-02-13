@@ -51,7 +51,8 @@ export default function ActivityFeed({ gameId }: ActivityFeedProps) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      // Use unsubscribe() instead of removeChannel() for React Strict Mode compatibility
+      channel.unsubscribe();
     };
   }, [fetchEvents, gameId]);
 

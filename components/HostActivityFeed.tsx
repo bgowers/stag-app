@@ -53,7 +53,9 @@ export default function HostActivityFeed({ gameId }: HostActivityFeedProps) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      // Use unsubscribe() instead of removeChannel() for React Strict Mode compatibility
+      // This allows the channel to reconnect properly after unmount/remount cycles
+      channel.unsubscribe();
     };
   }, [fetchEvents, gameId]);
 
