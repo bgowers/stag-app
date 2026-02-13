@@ -92,6 +92,12 @@ CREATE POLICY "Allow all on players" ON players FOR ALL USING (true);
 CREATE POLICY "Allow all on challenges" ON challenges FOR ALL USING (true);
 CREATE POLICY "Allow all on events" ON events FOR ALL USING (true);
 
+-- Enable Realtime for tables
+-- This allows Supabase Realtime subscriptions to receive postgres_changes events
+ALTER PUBLICATION supabase_realtime ADD TABLE events;
+ALTER PUBLICATION supabase_realtime ADD TABLE players;
+ALTER PUBLICATION supabase_realtime ADD TABLE challenges;
+
 -- Optional: Add some sample data for testing
 -- Uncomment the following lines if you want to start with test data
 
