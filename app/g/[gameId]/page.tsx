@@ -44,12 +44,11 @@ export default function PlayerPage() {
       setPlayers(playersData || []);
     } catch (error) {
       console.error('Error fetching game data:', error);
+    } finally {
+      // Only set loading to false after data is fetched
+      setIsLoading(false);
     }
   }, [gameId]);
-
-  useEffect(() => {
-    fetchGameData();
-  }, [fetchGameData]);
 
   useEffect(() => {
     // Check localStorage for saved player
@@ -57,8 +56,10 @@ export default function PlayerPage() {
     if (savedPlayerId) {
       setCurrentPlayerId(savedPlayerId);
     }
-    setIsLoading(false);
-  }, [gameId]);
+
+    // Fetch game data (will set isLoading to false when done)
+    fetchGameData();
+  }, [gameId, fetchGameData]);
 
   const handleSelectPlayer = (playerId: string) => {
     localStorage.setItem(`stagApp_playerId_${gameId}`, playerId);
@@ -88,11 +89,20 @@ export default function PlayerPage() {
   // Find current player
   const currentPlayer = players.find((p) => p.id === currentPlayerId);
 
-  if (!currentPlayer) {
-    // Player was deleted, clear selection
+  if (!currentPlayer && players.length > 0) {
+    // Player was deleted (but only if players list has loaded), clear selection
     localStorage.removeItem(`stagApp_playerId_${gameId}`);
     setCurrentPlayerId(null);
     return null;
+  }
+
+  // Still loading player data
+  if (!currentPlayer) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-gray-600 text-lg">Loading...</div>
+      </div>
+    );
   }
 
   const tabs = [
