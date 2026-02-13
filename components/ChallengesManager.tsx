@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Challenge } from '@/lib/types';
-import toast from 'react-hot-toast';
-import { Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
+import { supabase } from "@/lib/supabase";
+import { Challenge } from "@/lib/types";
+import { Edit2, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface ChallengesManagerProps {
   gameId: string;
@@ -14,13 +14,15 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null);
+  const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(
+    null,
+  );
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
+    title: "",
+    description: "",
     base_points: 0,
     bonus_points: 0,
-    category: '',
+    category: "",
     is_active: true,
     is_repeatable: false,
   });
@@ -28,16 +30,16 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
   const fetchChallenges = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('challenges')
-        .select('*')
-        .eq('game_id', gameId)
-        .order('sort_order', { ascending: true });
+        .from("challenges")
+        .select("*")
+        .eq("game_id", gameId)
+        .order("sort_order", { ascending: true });
 
       if (error) throw error;
       setChallenges(data || []);
     } catch (error) {
-      console.error('Error fetching challenges:', error);
-      toast.error('Failed to load challenges');
+      console.error("Error fetching challenges:", error);
+      toast.error("Failed to load challenges");
     } finally {
       setIsLoading(false);
     }
@@ -49,11 +51,11 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
 
   const resetForm = () => {
     setFormData({
-      title: '',
-      description: '',
+      title: "",
+      description: "",
       base_points: 0,
       bonus_points: 0,
-      category: '',
+      category: "",
       is_active: true,
       is_repeatable: false,
     });
@@ -65,12 +67,12 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      toast.error('Please enter a challenge title');
+      toast.error("Please enter a challenge title");
       return;
     }
 
     if (formData.base_points < 0) {
-      toast.error('Base points cannot be negative');
+      toast.error("Base points cannot be negative");
       return;
     }
 
@@ -78,29 +80,31 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
       if (editingChallenge) {
         // Update existing challenge
         const { error } = await supabase
-          .from('challenges')
+          .from("challenges")
           .update({
             title: formData.title.trim(),
             description: formData.description.trim() || null,
             base_points: formData.base_points,
-            bonus_points: formData.bonus_points > 0 ? formData.bonus_points : null,
+            bonus_points:
+              formData.bonus_points > 0 ? formData.bonus_points : null,
             category: formData.category.trim() || null,
             is_active: formData.is_active,
             is_repeatable: formData.is_repeatable,
           })
-          .eq('id', editingChallenge.id);
+          .eq("id", editingChallenge.id);
 
         if (error) throw error;
-        toast.success('Challenge updated!');
+        toast.success("Challenge updated!");
       } else {
         // Create new challenge
-        const { error } = await supabase.from('challenges').insert([
+        const { error } = await supabase.from("challenges").insert([
           {
             game_id: gameId,
             title: formData.title.trim(),
             description: formData.description.trim() || null,
             base_points: formData.base_points,
-            bonus_points: formData.bonus_points > 0 ? formData.bonus_points : null,
+            bonus_points:
+              formData.bonus_points > 0 ? formData.bonus_points : null,
             category: formData.category.trim() || null,
             is_active: formData.is_active,
             is_repeatable: formData.is_repeatable,
@@ -109,24 +113,24 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
         ]);
 
         if (error) throw error;
-        toast.success('Challenge created!');
+        toast.success("Challenge created!");
       }
 
       resetForm();
       fetchChallenges();
     } catch (error) {
-      console.error('Error saving challenge:', error);
-      toast.error('Failed to save challenge');
+      console.error("Error saving challenge:", error);
+      toast.error("Failed to save challenge");
     }
   };
 
   const handleEdit = (challenge: Challenge) => {
     setFormData({
       title: challenge.title,
-      description: challenge.description || '',
+      description: challenge.description || "",
       base_points: challenge.base_points,
       bonus_points: challenge.bonus_points || 0,
-      category: challenge.category || '',
+      category: challenge.category || "",
       is_active: challenge.is_active,
       is_repeatable: challenge.is_repeatable,
     });
@@ -135,41 +139,48 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
   };
 
   const handleDelete = async (challengeId: string, title: string) => {
-    if (!confirm(`Delete "${title}"? This will also remove all related claims.`)) {
+    if (
+      !confirm(`Delete "${title}"? This will also remove all related claims.`)
+    ) {
       return;
     }
 
     try {
-      const { error } = await supabase.from('challenges').delete().eq('id', challengeId);
+      const { error } = await supabase
+        .from("challenges")
+        .delete()
+        .eq("id", challengeId);
 
       if (error) throw error;
 
       setChallenges(challenges.filter((c) => c.id !== challengeId));
-      toast.success('Challenge deleted');
+      toast.success("Challenge deleted");
     } catch (error) {
-      console.error('Error deleting challenge:', error);
-      toast.error('Failed to delete challenge');
+      console.error("Error deleting challenge:", error);
+      toast.error("Failed to delete challenge");
     }
   };
 
   const handleToggleActive = async (challenge: Challenge) => {
     try {
       const { error } = await supabase
-        .from('challenges')
+        .from("challenges")
         .update({ is_active: !challenge.is_active })
-        .eq('id', challenge.id);
+        .eq("id", challenge.id);
 
       if (error) throw error;
 
       setChallenges(
         challenges.map((c) =>
-          c.id === challenge.id ? { ...c, is_active: !c.is_active } : c
-        )
+          c.id === challenge.id ? { ...c, is_active: !c.is_active } : c,
+        ),
       );
-      toast.success(challenge.is_active ? 'Challenge hidden' : 'Challenge shown');
+      toast.success(
+        challenge.is_active ? "Challenge hidden" : "Challenge shown",
+      );
     } catch (error) {
-      console.error('Error toggling challenge:', error);
-      toast.error('Failed to update challenge');
+      console.error("Error toggling challenge:", error);
+      toast.error("Failed to update challenge");
     }
   };
 
@@ -185,9 +196,12 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
     <div className="space-y-4">
       {/* Add/Edit Form */}
       {showForm ? (
-        <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg space-y-3">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-gray-50 p-4 rounded-lg space-y-3 text-gray-700"
+        >
           <h3 className="font-semibold text-lg">
-            {editingChallenge ? 'Edit Challenge' : 'New Challenge'}
+            {editingChallenge ? "Edit Challenge" : "New Challenge"}
           </h3>
 
           <div>
@@ -197,7 +211,9 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
             <input
               type="text"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="e.g., Down your pint"
             />
@@ -209,7 +225,9 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="e.g., Finish a full pint in under 10 seconds"
               rows={2}
@@ -225,7 +243,10 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
                 type="number"
                 value={formData.base_points}
                 onChange={(e) =>
-                  setFormData({ ...formData, base_points: parseInt(e.target.value) || 0 })
+                  setFormData({
+                    ...formData,
+                    base_points: parseInt(e.target.value) || 0,
+                  })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 min="0"
@@ -240,7 +261,10 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
                 type="number"
                 value={formData.bonus_points}
                 onChange={(e) =>
-                  setFormData({ ...formData, bonus_points: parseInt(e.target.value) || 0 })
+                  setFormData({
+                    ...formData,
+                    bonus_points: parseInt(e.target.value) || 0,
+                  })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 min="0"
@@ -255,7 +279,9 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
             <input
               type="text"
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="e.g., drinking, performance"
             />
@@ -267,10 +293,15 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
                 type="checkbox"
                 id="is_active"
                 checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                onChange={(e) =>
+                  setFormData({ ...formData, is_active: e.target.checked })
+                }
                 className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
               />
-              <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="is_active"
+                className="text-sm font-medium text-gray-700"
+              >
                 Active (visible to players)
               </label>
             </div>
@@ -280,10 +311,15 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
                 type="checkbox"
                 id="is_repeatable"
                 checked={formData.is_repeatable}
-                onChange={(e) => setFormData({ ...formData, is_repeatable: e.target.checked })}
+                onChange={(e) =>
+                  setFormData({ ...formData, is_repeatable: e.target.checked })
+                }
                 className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
               />
-              <label htmlFor="is_repeatable" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="is_repeatable"
+                className="text-sm font-medium text-gray-700"
+              >
                 Repeatable (can be claimed multiple times)
               </label>
             </div>
@@ -294,12 +330,12 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
               type="submit"
               className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
             >
-              {editingChallenge ? 'Update' : 'Create'}
+              {editingChallenge ? "Update" : "Create"}
             </button>
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
@@ -328,15 +364,19 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
               key={challenge.id}
               className={`p-4 rounded-lg border-2 transition-colors ${
                 challenge.is_active
-                  ? 'bg-white border-gray-200'
-                  : 'bg-gray-50 border-gray-300 opacity-60'
+                  ? "bg-white border-gray-200"
+                  : "bg-gray-50 border-gray-300 opacity-60"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-gray-900">{challenge.title}</h4>
+                  <h4 className="font-semibold text-gray-900">
+                    {challenge.title}
+                  </h4>
                   {challenge.description && (
-                    <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {challenge.description}
+                    </p>
                   )}
                   <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-medium">
@@ -359,9 +399,17 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
                   <button
                     onClick={() => handleToggleActive(challenge)}
                     className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    title={challenge.is_active ? 'Hide from players' : 'Show to players'}
+                    title={
+                      challenge.is_active
+                        ? "Hide from players"
+                        : "Show to players"
+                    }
                   >
-                    {challenge.is_active ? <Eye size={18} /> : <EyeOff size={18} />}
+                    {challenge.is_active ? (
+                      <Eye size={18} />
+                    ) : (
+                      <EyeOff size={18} />
+                    )}
                   </button>
                   <button
                     onClick={() => handleEdit(challenge)}
@@ -385,7 +433,8 @@ export default function ChallengesManager({ gameId }: ChallengesManagerProps) {
       )}
 
       <div className="text-sm text-gray-500 mt-2">
-        {challenges.length} {challenges.length === 1 ? 'challenge' : 'challenges'}
+        {challenges.length}{" "}
+        {challenges.length === 1 ? "challenge" : "challenges"}
       </div>
     </div>
   );
